@@ -3,8 +3,14 @@
 
 #include <QMainWindow>
 #include <QCloseEvent>
+#include <QKeyEvent>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QMessageBox>
+#include <QString>
+
+#include "volumehandler.h"
+
+#include <windows.h>
 
 #include <QDebug>
 
@@ -31,7 +37,9 @@ private slots:
 
     void closeEvent(QCloseEvent *event);
 
-    void triggerKey(QByteArray key);
+    void triggerKey();
+
+    void on_faderGui_valueChanged(int value);
 
 signals:
 
@@ -41,7 +49,10 @@ private:
     Ui::MainWindow *ui;
 
     QSerialPort *serial;
+
     QByteArray dataRX;
+
+    VolumeHandler volumeHandler;
 };
 
 #endif // MAINWINDOW_H
