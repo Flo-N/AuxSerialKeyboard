@@ -26,9 +26,11 @@ LIBS += -lole32
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    volumehandler.cpp
+    volumehandler.cpp \
+    serialhandler.cpp
 
 HEADERS  += mainwindow.h \
-    volumehandler.h
+    volumehandler.h \
+    serialhandler.h
 
 FORMS    += mainwindow.ui

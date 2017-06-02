@@ -1,20 +1,18 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QtSerialPort/QSerialPort>
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    volumeHandler(this)
+    volumeHandler(this),
+    serialHandler(this)
 {
     ui->setupUi(this);
 
-    serial = new QSerialPort(this);
+    connect(&serialHandler, &SerialHandler::newSerialBufferReceived, this, &MainWindow::saveBuffer);
 
-    connect(serial, &QSerialPort::readyRead, this, &MainWindow::readData);
-    connect(this, &MainWindow::newSerialBufferReceived, this, &MainWindow::setStatusBar);
-    connect(this, &MainWindow::newSerialBufferReceived, this, &MainWindow::triggerKey);
+    connect(this, &MainWindow::newBuffer, this, &MainWindow::setStatusBar);
+    connect(this, &MainWindow::newBuffer, this, &MainWindow::triggerKey);
 
     ui->faderGui->setValue(255 * volumeHandler.getVolumeScalar());
 
@@ -51,32 +49,30 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
-void MainWindow::readData(){
+void MainWindow::saveBuffer(QByteArray buffer){
 
-    dataRX.append(serial->readAll());
+    dataRX.append(buffer);
 
-//    if(dataRX.length() >= 4){
-
-        newSerialBufferReceived(dataRX);
-//        dataRX.clear();
-//    }
+    emit newBuffer(dataRX);
 }
 
 void MainWindow::on_startButton_clicked()
 {
 
-    serial->setPortName(ui->comLineEdit->text());
-    serial->setBaudRate(static_cast<QSerialPort::BaudRate>(ui->baudSpinBox->text().toInt()));
-    serial->setDataBits(static_cast<QSerialPort::DataBits>(ui->dataBitsSpinBox->text().toInt()));
-    serial->setParity(static_cast<QSerialPort::Parity>(0));
-    serial->setStopBits(static_cast<QSerialPort::StopBits>(ui->stopBitSpinBox->text().toInt()));
-    serial->setFlowControl(static_cast<QSerialPort::FlowControl>(0));
-    serial->setReadBufferSize(0); // 0 == default
+//    serial->setPortName(ui->comLineEdit->text());
+//    serial->setBaudRate(static_cast<QSerialPort::BaudRate>(ui->baudSpinBox->text().toInt()));
+//    serial->setDataBits(static_cast<QSerialPort::DataBits>(ui->dataBitsSpinBox->text().toInt()));
+//    serial->setParity(static_cast<QSerialPort::Parity>(0));
+//    serial->setStopBits(static_cast<QSerialPort::StopBits>(ui->stopBitSpinBox->text().toInt()));
+//    serial->setFlowControl(static_cast<QSerialPort::FlowControl>(0));
+//    serial->setReadBufferSize(0); // 0 == default
 
-    if (serial->open(QIODevice::ReadWrite)) {
+    QString start = serialHandler.start(ui->comLineEdit->text(), ui->baudSpinBox->text().toInt(), ui->dataBitsSpinBox->text().toInt(), 0, ui->stopBitSpinBox->text().toInt(), 0, 0);
+
+    if (start == "") {
         setStatusBar("Serial started");
     } else {
-        setStatusBar("Serial startup failed: " + serial->errorString());
+        setStatusBar("Serial startup failed: " + start);
     }
 
     qDebug("Serial startup ended");
@@ -84,11 +80,10 @@ void MainWindow::on_startButton_clicked()
 
 void MainWindow::on_stopButton_clicked()
 {
-    if (serial->isOpen()){
-        serial->close();
+    if(serialHandler.stop())
         setStatusBar("Serial stoped");
-    }
-    setStatusBar("Serial stoped");
+    else
+        setStatusBar("No open connection");
 }
 
 void MainWindow::setStatusBar(QString text){
@@ -131,6 +126,7 @@ void MainWindow::triggerKey(){
             qDebug() << "Value" << value;
             qDebug() << (float)value / (float)1023.0;
             volumeHandler.setVolumeScalar((float)value / (float)1023.0);
+            ui->faderGui->setValue(value * 0.21994134897);
             break;
         }
         default:
@@ -143,5 +139,4 @@ void MainWindow::triggerKey(){
 void MainWindow::on_faderGui_valueChanged(int value)
 {
     volumeHandler.setVolumeScalar((quint8)value);
-    qDebug() << volumeHandler.getVolumeScalar();
 }

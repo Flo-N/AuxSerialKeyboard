@@ -4,11 +4,11 @@
 #include <QMainWindow>
 #include <QCloseEvent>
 #include <QKeyEvent>
-#include <QtSerialPort/QSerialPortInfo>
 #include <QMessageBox>
 #include <QString>
 
 #include "volumehandler.h"
+#include "serialhandler.h"
 
 #include <windows.h>
 
@@ -26,11 +26,11 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    void readData();
+
 
 private slots:
-    void on_startButton_clicked();
 
+    void on_startButton_clicked();
     void on_stopButton_clicked();
 
     void setStatusBar(QString);
@@ -41,18 +41,21 @@ private slots:
 
     void on_faderGui_valueChanged(int value);
 
+    void saveBuffer(QByteArray buffer);
+
 signals:
 
-    void newSerialBufferReceived(QByteArray);
+    void newBuffer(QByteArray);
 
 private:
+
     Ui::MainWindow *ui;
 
-    QSerialPort *serial;
+    VolumeHandler volumeHandler;
+
+    SerialHandler serialHandler;
 
     QByteArray dataRX;
-
-    VolumeHandler volumeHandler;
 };
 
 #endif // MAINWINDOW_H

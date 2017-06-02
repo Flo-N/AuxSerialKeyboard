@@ -24,7 +24,11 @@ public:
 private:
     IAudioEndpointVolume *endpointVolume;
 
+    float setVolume;
 signals:
+
+private slots:
+    float filter();
 
 public slots:
 
